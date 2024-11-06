@@ -1,0 +1,89 @@
+#compdef bundle.sh unbundle.sh
+
+_bundle_sh() {
+    local -a opts
+    opts=(
+        '(-o --output)'{-o,--output}'[Specify output file]:output file:_files -g "*.txt"'
+        '(-f --force)'{-f,--force}'[Overwrite existing output file]'
+        '(-a --all)'{-a,--all}'[Include all files]'
+        '(-v --version)'{-v,--version}'[Show version information]'
+        '(-h --help)'{-h,--help}'[Show help message]'
+        '--no-git-ignore[Don'\''t respect .gitignore files]'
+        '--include-hidden[Include hidden files and directories]'
+        '--include-build[Include build directories]'
+        '--include-binary[Include binary files]'
+        '--include-empty-dirs[Include empty directories]'
+        '--exclude[Exclude specific file or path]:file to exclude:_files'
+        '--exclude-pattern[Exclude files matching pattern]:pattern:->patterns'
+        '--build-dirs[Specify build directories to exclude]:build directories:->build-dirs'
+    )
+
+    local curcontext="$curcontext" state line
+    typeset -A opt_args
+
+    _arguments -C \
+        "${opts[@]}" \
+        '*:input paths:_files' \
+        && return 0
+
+    case $state in
+        patterns)
+            local -a patterns
+            patterns=(
+                '*.txt:Text files'
+                '*.log:Log files'
+                '*.tmp:Temporary files'
+                '*.bak:Backup files'
+            )
+            _describe -t patterns 'file patterns' patterns
+            ;;
+        build-dirs)
+            local -a build_dirs
+            build_dirs=(
+                'build/:Common build directory'
+                'target/:Java/Rust build directory'
+                'dist/:Distribution directory'
+                'out/:Output directory'
+                'node_modules/:Node.js modules'
+                'bin/:Binary directory'
+                'obj/.NET object directory'
+                '__pycache__/:Python cache'
+                '.pytest_cache/:Python test cache'
+                'venv/:Python virtual environment'
+                '.gradle/:Gradle build'
+                '.kotlin/:Kotlin build'
+                'cmake-build/:CMake build'
+                'bazel-out/:Bazel output'
+            )
+            # Support comma-separated values
+            compset -P '*,'
+            _describe -t build-dirs 'build directories' build_dirs
+            ;;
+    esac
+}
+
+_unbundle_sh() {
+    local -a opts
+    opts=(
+        '(-o --output)'{-o,--output}'[Extract to specified directory]:output directory:_directories'
+        '(-f --force)'{-f,--force}'[Overwrite existing directory]'
+        '(-p --preview)'{-p,--preview}'[Show contents without extracting]'
+        '(-v --version)'{-v,--version}'[Show version information]'
+        '(-h --help)'{-h,--help}'[Show help message]'
+    )
+
+    _arguments -C \
+        "${opts[@]}" \
+        '1::input bundle:_files -g "*.txt"' \
+        '2::output parent directory:_directories' \
+        && return 0
+}
+
+case "$service" in
+    bundle.sh)
+        _bundle_sh "$@"
+        ;;
+    unbundle.sh)
+        _unbundle_sh "$@"
+        ;;
+esac
